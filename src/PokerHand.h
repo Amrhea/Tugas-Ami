@@ -1,31 +1,19 @@
-#ifndef POKERHAND_H
-#define POKERHAND_H
-
+#pragma once
 #include <vector>
 #include <string>
 #include "Card.h"
 
-// Enum untuk tipe Hand dari bawah ke atas
-enum class HandType {
-    HighCard,
-    Pair,
-    TwoPair,
-    ThreeOfAKind,
-    Straight
-    // Bisa ditambah Flush, FullHouse, dll nanti
-};
-
 struct HandResult {
-    HandType type;
     std::string name;
-    double baseChips; // Tambahan skor tetap
-    double multi;     // Tambahan multiplier
+    double baseChips;
+    double multi;
 };
 
 class PokerHand {
 public:
-    // Fungsi utama untuk mengecek 5 kartu dan mengembalikan hasilnya
-    static HandResult evaluate(std::vector<Card>& cards);
-};
+    static HandResult evaluate(const std::vector<Card>& cards);
 
-#endif
+private:
+    static bool isFlush(const std::vector<Card>& cards);
+    static bool isStraight(const std::vector<int>& ranksSortedUnique); // hanya valid untuk 5 kartu
+};

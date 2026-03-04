@@ -7,7 +7,7 @@
 #include <algorithm>
 #include "Card.h"
 #include "modifier/IModifier.h"
-
+#include "ShopSystem.h"
 // Baru: Enum untuk memisahkan 3 tipe blind
 enum class BlindType {
     SmallBlind,
@@ -23,6 +23,9 @@ private:
     
     // Total skor kumulatif sepanjang run (bersifat opsi statistik, tidak dipakai untuk cek menang kalah blind)
     double totalScore; 
+    
+    int coins;              // BARU
+    ShopSystem shop;        // BARU
     
     ScoringSystem scorer;
     std::vector<IModifier*> activeModifiers;

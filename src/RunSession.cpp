@@ -3,10 +3,12 @@
 #include "PokerHand.h" // Tambahkan ini!
 #include <iostream>
 #include <limits> // Untuk mencegah error saat cin << salah ketik
+#include <set>
 
-RunSession::RunSession() : 
-    currentRound(1), maxRounds(5), isRunActive(true), totalScore(0), 
-    currentBlind(BlindType::SmallBlind), currentBlindTarget(20.0) 
+RunSession::RunSession() :
+    currentRound(1), maxRounds(5), isRunActive(true), totalScore(0),
+    currentBlind(BlindType::SmallBlind), currentBlindTarget(20.0),
+    coins(15), shop(5) // modal 15, slot max 5
 {
     IModifier* mod1 = ModifierFactory::createModifier("Flat");
     IModifier* mod2 = ModifierFactory::createModifier("Double");
@@ -64,6 +66,7 @@ void RunSession::startRun() {
     setBlindTarget();
 }
 
+// Implementasi Fungsi Play Hand yang Benar dan Logis
 void RunSession::playHand() {
     std::cout << "\n-----------------------------------------" << std::endl;
     std::cout << "RONDE " << currentRound << " | FASE: " << getBlindName(currentBlind) << std::endl;
@@ -86,25 +89,47 @@ void RunSession::playHand() {
     }
 
     // --- LANGKAH 2: PENGGUNA MEMILIH 5 KARTU ---
-    std::vector<Card> playedCards;
-    std::cout << "\nKetik 5 nomor kartu yang ingin dimainkan (pisahkan spasi): ";
-    
-    for (int i = 0; i < 5; ++i) {
-        int choice;
-        std::cin >> choice;
-        
-        // Pencegahan bug jika player mengetik huruf (bukan angka)
-        if (std::cin.fail()) {
-            std::cin.clear();
-            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-            choice = i + 1; // Auto pick urutan jika error
-        }
-        else if (choice < 1 || choice > 8) {
-            choice = i + 1;
-        }
-        
-        playedCards.push_back(hand[choice - 1]);
+ // --- LANGKAH 2: PENGGUNA MEMILIH 1-5 KARTU ---
+std::vector<Card> playedCards;
+
+int jumlahMain = 5;
+std::cout << "\nMau main berapa kartu? (1-5): ";
+std::cin >> jumlahMain;
+
+if (std::cin.fail()) {
+    std::cin.clear();
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    jumlahMain = 5;
+}
+if (jumlahMain < 1) jumlahMain = 1;
+if (jumlahMain > 5) jumlahMain = 5;
+
+std::cout << "Ketik " << jumlahMain << " nomor kartu (1-8), pisahkan spasi: ";
+
+std::set<int> picked;
+for (int i = 0; i < jumlahMain; ) {
+    int choice;
+    std::cin >> choice;
+
+    if (std::cin.fail()) {
+        std::cin.clear();
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        std::cout << "Input harus angka. Coba lagi: ";
+        continue;
     }
+    if (choice < 1 || choice > 8) {
+        std::cout << "Nomor harus 1-8. Coba lagi: ";
+        continue;
+    }
+    if (picked.count(choice)) {
+        std::cout << "Kartu itu sudah dipilih. Pilih yang lain: ";
+        continue;
+    }
+
+    picked.insert(choice);
+    playedCards.push_back(hand[choice - 1]);
+    ++i;
+}
 
     // --- LANGKAH 3: EVALUASI KARTU YANG DIPILIH (POKER HAND & CHIPS) ---
     double cardChips = 0.0;
@@ -135,6 +160,9 @@ void RunSession::playHand() {
     
     std::cout << "\nSKOR AKHIR FASE INI: " << finalRoundScore << std::endl;
 
+    coins += (int)(finalRoundScore / 60.0); // balance bebas
+    std::cout << "[COINS] Total coins: " << coins << "\n";
+    
     if (finalRoundScore < currentBlindTarget) {
         std::cout << "\n[GAME OVER] Kamu gagal mencapai target " << currentBlindTarget << "!" << std::endl;
         endRun();
@@ -165,7 +193,7 @@ void RunSession::playHand() {
 }
 
 void RunSession::enterShop() {
-    std::cout << "Entering Shop... (Belum ada item untuk dibeli)" << std::endl;
+    shop.open(coins, activeModifiers);
 }
 
 void RunSession::endRun() {
